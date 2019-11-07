@@ -1,41 +1,75 @@
-package milkTea;
-
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Random;
+import java.util.Scanner;
 
 /**
  *
  */
-public class Main {
-    public static void main(String[] args) {
-        Shop teaShop = new TeaShop();
-        Random r = new Random();
+class HelloWorld {
+    private int n;
+    public HelloWorld( int n){
+        this.n = n;
+    }
+    public void hello() throws InterruptedException{
+        for (int i = 0; i < n; i++) {
+            System.out.print("Hello");
+            synchronized (this){
+                notifyAll();
+                wait();
+            }
+        }
+        notifyAll();
+    }
 
-        Calendar c1 = Calendar.getInstance();
-        c1.setTime(new Date(System.currentTimeMillis()-r.nextInt(15*24*3600*1000)));
-        System.out.println(c1.get(Calendar.YEAR)+"-"+(c1.get(Calendar.MONTH)+1)+"-"+c1.get(Calendar.DAY_OF_MONTH));
-        teaShop.addProduction(new Bubble("波霸",c1));
+    public void world() throws InterruptedException{
+        Thread.sleep(10);
+        for (int i = 0; i < n; i++) {
+            System.out.println("World!");
+            synchronized (this){
+                notifyAll();
+                wait();
+            }
+        }
+    }
 
-        Calendar c2 = Calendar.getInstance();
-        c2.setTime(new Date(System.currentTimeMillis()-r.nextInt(7*24*3600*1000)));
-        System.out.println(c2.get(Calendar.YEAR)+"-"+(c2.get(Calendar.MONTH)+1)+"-"+c2.get(Calendar.DAY_OF_MONTH));
-        teaShop.addProduction(new Coconut("草莓味椰果",c2));
+}
+
+class PrintWorld implements Runnable{
+    HelloWorld helloWorld;
+    public PrintWorld(HelloWorld helloWorld){
+        this.helloWorld = helloWorld;
+    }
+    @Override
+    public void run(){
         try {
-            MilkTea tea = teaShop.sellMilkTea("奶茶1","Bubble");
-            System.out.println(tea.toString());
-            tea = teaShop.sellMilkTea("奶茶2","Bubble");
-            System.out.println(tea.toString());
-        } catch (SoldOutException e) {
+            helloWorld.world();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+}
+
+class PrintHello implements Runnable {
+    HelloWorld helloWorld;
+    public PrintHello(HelloWorld helloWorld){
+        this.helloWorld = helloWorld;
+    }
+    @Override
+    public void run() {
         try {
-            MilkTea tea = teaShop.sellMilkTea("奶茶3","Coconut");
-            System.out.println(tea.toString());
-            tea = teaShop.sellMilkTea("奶茶4","Coconut");
-            System.out.println(tea.toString());
-        } catch (SoldOutException e) {
-                e.printStackTrace();
+            helloWorld.hello();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        HelloWorld helloWorld = new HelloWorld(n);
+        PrintHello printHello = new PrintHello(helloWorld);
+        PrintWorld printWorld = new PrintWorld(helloWorld);
+        new Thread(printHello).start();
+        new Thread(printWorld).start();
     }
 }
